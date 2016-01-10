@@ -4,7 +4,7 @@
   "description": "graphQl vk api",
   "main": "index.js",
   "scripts": {
-    "test": "npm test",
+    "test": "mocha --compilers js:babel-register --reporter spec --bail --check-leaks test/",
     "start": "nodemon index.js"
   },
   "keywords": [
@@ -23,6 +23,10 @@
     "graphql": "^0.4.14"
   },
   "devDependencies": {
+    "chai": "^3.4.1",
+    "chai-as-promised": "^5.2.0",
+    "chai-things": "^0.2.0",
+    "mocha": "^2.3.4",
     "nodemon": "^1.8.1"
   }
 }

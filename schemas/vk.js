@@ -5,21 +5,23 @@ import {
     GraphQLString,
     GraphQLInt,
     GraphQLList,
-    GraphQLEnumType
+    GraphQLEnumType,
+    GraphQLID
 } from 'graphql'
 
 import {
     getUser,
     getFriends,
     getAlbums,
-    getPhotos
+    getPhotos,
+    getGroups
 } from "../api/vk"
 
 let friendType = new GraphQLObjectType({
     name:"friend",
     fields(){
         return {
-            id:{type:GraphQLInt},
+            id:{type:GraphQLID},
             first_name:{type:GraphQLString},
             last_name:{type:GraphQLString},
             city:{type:GraphQLString},
@@ -33,10 +35,21 @@ let photoType = new GraphQLObjectType({
     description:"User's photo from album",
     fields(){
         return {
-            id:{type:GraphQLString},
+            id:{type:GraphQLID},
             photo_75:{type:GraphQLString},
             photo_130:{type:GraphQLString},
             photo_604:{type:GraphQLString}
+        }
+    }
+});
+
+let groupType = new GraphQLObjectType({
+    name:"Group",
+    description:"User's groups",
+    fields(){
+        return {
+            id:{type:GraphQLInt},
+            name:{type:GraphQLString}
         }
     }
 });
@@ -47,35 +60,37 @@ let albumType = new GraphQLObjectType({
    description:"User's photo albums",
    fields(){
        return {
-            owner_id:{type:GraphQLInt},
+            owner_id:{type:GraphQLID},
             id:{type:GraphQLString},
             title:{type:GraphQLString},
             thumb_id:{type:GraphQLInt},
             description:{type:GraphQLString},
-            created:{type:GraphQLString},
-            updated:{type:GraphQLString},
+            created:{type:GraphQLInt},
+            updated:{type:GraphQLInt},
             size:{type:GraphQLInt},
             photos:{
+                args:{
+                    count:{
+                        type:GraphQLInt,
+                        description:"Limit albums"
+                    }
+                },
                 type:new GraphQLList(photoType),
-                resolve(album){
-                    return getPhotos(album.owner_id, album.id)
+                resolve(album,args){
+                    return getPhotos(album.owner_id, album.id, args.count)
                 }
             }
        }
    }
 });
 
-let followers_count = {
-    type:GraphQLInt,
-    description:"Count of user followers"
-};
 
 let userType = new GraphQLObjectType({
     name:"vkUser",
     description:"Vk.com user",
     fields(){
         return  {
-            id:{type:GraphQLInt},
+            id:{type:GraphQLID},
             first_name:{type:GraphQLString},
             last_name:{type:GraphQLString},
             photo_50:{type:GraphQLString},
@@ -83,7 +98,7 @@ let userType = new GraphQLObjectType({
             photo_200:{type:GraphQLString},
             albums:{
                 args:{
-                    limit:{
+                    count:{
                         type:GraphQLInt,
                         description:"Limit albums"
                     },
@@ -94,13 +109,12 @@ let userType = new GraphQLObjectType({
                 },
                 type:new GraphQLList(albumType),
                 resolve(user, args){
-                    let limit = args.limit || "";
-                    return getAlbums(user.id, "", limit)
+                    return getAlbums(user.id, args.album_ids, args.count)
                 }
             },
             friends:{
                 args:{
-                  limit:{
+                  count:{
                       type:GraphQLInt,
                       description:"Limit friends"
                   }
@@ -111,8 +125,13 @@ let userType = new GraphQLObjectType({
                      let fieldsRequest = selection.map(item =>{
                         return item.name.value
                      });
-                     let limit = args.limit||"";
-                     return getFriends(user.id, limit, fieldsRequest)
+                     return getFriends(user.id, args.count, fieldsRequest)
+                }
+            },
+            groups:{
+                type:new GraphQLList(groupType),
+                resolve(user){
+                    return getGroups(user.id)
                 }
             }
         }

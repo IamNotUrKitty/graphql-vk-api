@@ -1,16 +1,32 @@
 import axios from "axios"
 
+let a_token;
+
+export function setToken(token){
+    a_token = token;
+}
+
+let retItems = (result) => result['items']||[];
 /**
  * Return promise api request
  * @param method(String) api method
  * @param params(String) params for api request
- * @return Promise api request
+ * @return axios.Promise api request
  **/
-let apiRequest = (method,params)=>{
+let apiRequest = (method, params)=>{
     let _params = buildQuery(params);
-    return axios.get(`https://api.vk.com/method/${method}?${_params}&v=5.42`).then(result =>{
-        return result["data"]["response"]
-    })
+    let token = a_token?`access_token=${a_token}`:"";
+    return axios.get(`https://api.vk.com/method/${method}?${_params}${token}&v=5.42`)
+        .then(result => {
+           if(result['data']['error']){
+               return new Error(result['data']['error']["error_msg"])
+           }else{
+               return result["data"]["response"]
+           }
+        })
+        .catch(err =>{
+            console.log(err);
+        })
 };
 
 /**
@@ -36,9 +52,7 @@ let buildQuery = (params) => {
 export function getUser(user_ids, fields = []) {
     fields = fields.join(',');
     return apiRequest('users.get',{user_ids,fields})
-           .then(result =>{
-               return result[0]
-           });
+           .then(result => result[0]);
 }
 
 /**
@@ -51,9 +65,7 @@ export function getUser(user_ids, fields = []) {
 export function getFriends(user_id, count = "", fields = []){
     fields = fields.join(',');
     return apiRequest('friends.get',{user_id, count, fields})
-           .then(result =>{
-               return result["items"]
-           })
+           .then(retItems)
 }
 
 /**
@@ -66,9 +78,7 @@ export function getFriends(user_id, count = "", fields = []){
 export function getAlbums(owner_id, album_ids=[], count = ""){
     album_ids = album_ids.join(",");
     return apiRequest('photos.getAlbums',{owner_id, album_ids, count, need_system:1})
-           .then(result =>{
-               return result["items"]
-           })
+           .then(retItems)
 }
 
 /**
@@ -80,9 +90,8 @@ export function getAlbums(owner_id, album_ids=[], count = ""){
  * **/
 export function getPhotos(owner_id, album_id, count = ""){
     return apiRequest('photos.get',{owner_id,album_id, count})
-           .then(result =>{
-               return result["items"]
-           })
+           .then(retItems)
+
 }
 /**
  * Get user's groups
@@ -91,7 +100,26 @@ export function getPhotos(owner_id, album_id, count = ""){
  * */
 export function getGroups(user_id){
     return apiRequest('groups.get',{user_id,extended:1})
-           .then(result =>{
-               return result["items"]
-           })
+           .then(retItems)
+}
+/**
+ * Get user's audio
+ * @param user_id(integer) user_id
+ * @param count(integer) count audios to get
+ * @return Array JSON objects of audio
+ * */
+export function getAudio(user_id, count = ""){
+    return apiRequest('audio.get',{user_id, count})
+           .then(retItems)
+}
+
+/**
+ * Get user's video
+ * @param user_id(integer) user_id
+ * @param count(integer) count videos to get
+ * @return Array JSON objects of videos
+ * */
+export function getVideo(user_id, count = ""){
+    return apiRequest('video.get',{user_id, count})
+        .then(retItems)
 }

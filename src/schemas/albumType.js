@@ -9,10 +9,8 @@ import {
     GraphQLID
 } from 'graphql'
 
-import {
-    getPhotos
-} from "../api/vk"
-
+import {apiRequest} from "../api/vk"
+import {offset,count} from './utils/utils'
 
 let photoType = new GraphQLObjectType({
     name:"Photo",
@@ -22,7 +20,11 @@ let photoType = new GraphQLObjectType({
             id:{type:GraphQLID},
             photo_75:{type:GraphQLString},
             photo_130:{type:GraphQLString},
-            photo_604:{type:GraphQLString}
+            photo_604:{type:GraphQLString},
+            date:{type:GraphQLString},
+            width:{type:GraphQLInt},
+            height:{type:GraphQLInt},
+            text:{type:GraphQLString}
         }
     }
 });
@@ -41,15 +43,14 @@ let albumType = new GraphQLObjectType({
             updated:{type:GraphQLInt},
             size:{type:GraphQLInt},
             photos:{
-                args:{
-                    count:{
-                        type:GraphQLInt,
-                        description:"Limit albums"
-                    }
-                },
+                args:{count,offset},
                 type:new GraphQLList(photoType),
                 resolve(album,args){
-                    return getPhotos(album.owner_id, album.id, args.count)
+                    return apiRequest('photos.get',{
+                        owner_id:album.owner_id,
+                        album_id:album.id,
+                        count:args.count
+                    }).then(result =>result['items'])
                 }
             }
         }

@@ -13,8 +13,7 @@ let friendType = new GraphQLObjectType({
         return Object.assign({
             id:{type:GraphQLID},
             first_name:{type:GraphQLString},
-            last_name:{type:GraphQLString},
-
+            last_name:{type:GraphQLString}
         }, PersonFields)
     }
 });

@@ -7,7 +7,14 @@ import {
 
 export const count = {
     type:GraphQLInt,
-    description:"Limit items to show"
+    description:"Limit items to show",
+    defaultValue:""
+};
+
+export const offset = {
+    type:GraphQLInt,
+    description:"Offset items list",
+    defaultValue:""
 };
 
 export const user_id = {

@@ -6,14 +6,10 @@ import {
     GraphQLList
 } from 'graphql'
 
-import {
-    getUser,
-    getAudio
-} from "../api/vk"
-
+import {apiRequest} from "../api/vk"
 import userType from './userType'
 import audioType from './audioType'
-import {count, user_id} from './utils/utils'
+import {count, user_id, offset} from './utils/utils'
 
 export const Schema = new GraphQLSchema({
     query: new GraphQLObjectType({
@@ -27,24 +23,31 @@ export const Schema = new GraphQLSchema({
                       description:"id/screen_name of user"
                   }
                 },
-                resolve(root,{user_id},ast){
+                resolve(root, args, ast){
                     let selection = ast.fieldASTs[0].selectionSet.selections;
-                    let fieldsRequest = selection.map(item => item.name.value );
-                    let id = user_id ? user_id : '1';
-                    return getUser(id,fieldsRequest)
+                    let fields = selection.map(item => item.name.value );
+                    let user_ids = args.user_id;
+                    fields = fields.join(',');
+                    return apiRequest('users.get',{ user_ids, fields})
+                         .then(result => result[0])
                 }
             },
             audio:{
                 type: new GraphQLList(audioType),
                 args:{
                     count,
+                    offset,
                     user_id:{
                         type:new GraphQLNonNull(GraphQLString),
                         description:"id/screen_name of user"
                     }
                 },
                 resolve(root, args, ast){
-                    return getAudio(args.user_id, args.count)
+                    return apiRequest('audio.get',{
+                        owner_id:args.user_id,
+                        count:args.count||"",
+                        offset:args.offset||""
+                    }).then(result=>result['items'])
                 }
             }
         }

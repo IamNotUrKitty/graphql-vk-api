@@ -18,7 +18,6 @@ let videoType = new GraphQLObjectType({
            views:{type:GraphQLInt},
            comments:{type:GraphQLInt}
        }
-
    }
 });
 
